@@ -16,6 +16,16 @@ hot reload on edits etc.
 It is also bundled (WIP) so it produces a single httpd.lua file that can be
 installed into the game folder.
 
+### Local Development
+
+Run dev to start the server with hot reloading enabled
+
+```shell
+npm run dev
+```
+
+The server is running on http://localhost:17234
+
 ## Future Scope
 
 - Support Basic Authorization in the headers
