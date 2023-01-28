@@ -1,7 +1,7 @@
 {
-  "name": "dcs-fiddle-httpd",
+  "name": "lua-httpd_1-1",
   "version": "1.0.0",
-  "description": "DCS http server for use with DCS Fiddle",
+  "description": "HTTP/1.1 Server for LUA with no deps",
   "license": "MIT",
   "scripts": {
     "install:windows": "choco install lua",

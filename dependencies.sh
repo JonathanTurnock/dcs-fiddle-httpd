@@ -1,1 +1,0 @@
-luarocks install http
