@@ -8,7 +8,11 @@ The HTTP module sets up a TCP socket and listens for incoming connections.
 
 It implements the HTTP/1.1 protocol along with provision for static configuration of Basic, Api Token and Bearer Token auth.
 
-It does not support cryptography or encryption. (If needed this can be added within HTTP/1.1 payloads (i.e. AES encryption of a body) given the appropriate runtime environment)
+> It does not support cryptography or encryption. 
+> 
+> If required at a basic level this could be added within the HTTP/1.1 protocol just note the HTTP traffic (url, headers etc) would not be encrypted.
+> 
+> An example would be to use AES encryption on post request bodies that only the client and server understand and the text is 
 
 Simply grab the `http.lua` file and as long as the `socket` library is available it should work.
 
