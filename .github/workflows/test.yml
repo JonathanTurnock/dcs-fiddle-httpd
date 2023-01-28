@@ -19,6 +19,6 @@ jobs:
       with:
         node-version: 18
         cache: 'npm'
-    - run: apt install lua
+    - run: sudo apt-get install lua
     - run: npm ci
     - run: npm test
