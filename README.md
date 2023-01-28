@@ -4,6 +4,8 @@ HTTP/1.1 compliant server for LUA, useful to run in game environments where a ho
 
 It uses Javascript and Jest for unit testing and running `npm run test:watch` will allow development with automatic test being run on all changes.
 
+> This server has a single dependency, `socket` this should be present in most game environments hopefully, however if not this will need be resolved
+
 ## Usage
 
 The HTTP module sets up a TCP socket and listens for incoming connections.
