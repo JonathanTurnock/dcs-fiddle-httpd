@@ -1,3 +1,5 @@
+![Tests](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
+
 ## lua-httpd
 
 HTTP/1.1 compliant server for LUA, useful to run in game environments where a hook into the game runtime is required
