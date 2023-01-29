@@ -20,5 +20,7 @@ jobs:
         node-version: 18
         cache: 'npm'
     - run: sudo apt-get install lua5.1
+    - run: sudo apt-get install luarocks
+    - run: sudo luarocks install luasocket
     - run: npm ci
     - run: npm test
