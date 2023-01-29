@@ -12,11 +12,11 @@ The HTTP module sets up a TCP socket and listens for incoming connections.
 
 It implements the HTTP/1.1 protocol along with provision for static configuration of Basic, Api Token and Bearer Token auth.
 
-> It does not support cryptography or encryption. 
-> 
+> It does not support cryptography or encryption.
+>
 > If required at a basic level this could be added within the HTTP/1.1 protocol just note the HTTP traffic (url, headers etc) would not be encrypted.
-> 
-> An example would be to use AES encryption on post request bodies that only the client and server understand and the text is 
+>
+> An example would be to use AES encryption on post request bodies that only the client and server understand and the text is
 
 Simply grab the `http.lua` file and as long as the `socket` library is available it should work.
 
@@ -170,7 +170,7 @@ The implementation supports 3 HTTP/1.1 spec auth mechanisms.
 
 > ⚠️ It should be noted this is NOT https, the data between the client and server is NOT encrypted, so anyone can read
 > the credentials. If you are operating within an untrusted network this should absolutely not be used as a server.
-> 
+>
 > This is simply to avoid exposing the server to simple scans where a bad actor can find it completely unsecured.
 
 To get setup with global auth simply define an auth table inside the config, here we use basic and specify a username and password
@@ -194,7 +194,7 @@ http.start({
 })
 ```
 
-### Basic 
+### Basic
 
 Basic Auth requires the auth config to contain the following values
 
@@ -210,16 +210,17 @@ curl: (22) The requested URL returned error: 403
 ```
 
 Add the user information to see it succeed
+
 ```shell
-➜  ~ curl -f -u admin:password123! --location --request GET 'http://localhost:3000/'   
+➜  ~ curl -f -u admin:password123! --location --request GET 'http://localhost:3000/'
 OK
 ```
 
-> Basic authorization is sent as a header, the Authorization header is populated with the string    
+> Basic authorization is sent as a header, the Authorization header is populated with the string  
 > `Basic {username:password}` but the username:password is base64 encoded.
 >
 > You can implement a route/user/session specific implementation by inspecting the request.headers table in the handler.
-> 
+>
 > https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#basic_authentication_scheme
 
 ### Api Key
@@ -254,8 +255,9 @@ http.start({
 ```
 
 Provide the header in requests to successfully authenticate
+
 ```shell
-➜  ~ curl -f --header 'x-my-app-key: pviDlowxBn' --location --request GET 'http://localhost:3000/' 
+➜  ~ curl -f --header 'x-my-app-key: pviDlowxBn' --location --request GET 'http://localhost:3000/'
 OK
 ```
 
@@ -265,7 +267,7 @@ Bearer Token Auth requires the auth config to contain the following values
 
 > This is a somewhat naive impl of the bearer token, traditionally this is used as part of an authentication process
 > where the token is provided to indicate the user is already logged in. Consider using Basic or Api Key first.
-> 
+>
 > To see more about Bearer token usage see https://datatracker.ietf.org/doc/html/rfc6750
 
 - **type** - `Bearer Token` indicates Bearer Token impl should be used
@@ -290,6 +292,7 @@ http.start({
 ```
 
 Here we can see the token is passed in as part of the Authorization header in the format `Bearer {token}`
+
 ```shell
 ➜  ~ curl -f --header 'Authorization: Bearer pviDlowxBn' --location --request GET 'http://localhost:3000/'
 OK
@@ -297,7 +300,7 @@ OK
 
 ## Per Route Authorization
 
-All auth config defined in the http.start call is applied globally. 
+All auth config defined in the http.start call is applied globally.
 
 Authentication an also be applied at a function level as the below example, simply modify the status code to 403 and return
 
@@ -323,7 +326,5 @@ http.start({
 ## References
 
 > Documentation about implementing the HTTP Messaging Protocol
-> 
-> https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages
-> https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication
-> https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#basic_authentication_scheme
+>
+> https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages > https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication > https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#basic_authentication_scheme

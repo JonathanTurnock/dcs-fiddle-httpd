@@ -6,6 +6,8 @@
   "scripts": {
     "install:windows": "choco install lua",
     "install:osx": "brew install lua",
+    "prettier:write": "prettier . -w",
+    "prettier": "prettier . -c",
     "clean": "rimraf dist",
     "dev": "cd src/ && nodemon -x lua init.lua",
     "test": "concurrently -k -s last \"npm run dev\" \"jest\"",
