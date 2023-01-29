@@ -10,7 +10,7 @@
     "prettier": "prettier . -c",
     "clean": "rimraf dist",
     "dev": "cd src/ && nodemon -x lua init.lua",
-    "test": "concurrently -k -s last \"npm run dev\" \"jest\"",
+    "test": "concurrently -k -s \"first\" \"npm run dev\" \"jest\"",
     "test:watch": "nodemon --watch './src/**.*' --watch './test/**.test.js' -x npm run test"
   },
   "devDependencies": {
