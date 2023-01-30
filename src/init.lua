@@ -21,6 +21,6 @@ local server_loop = http.create_server({
     port = 3000
 })
 
-while 1 do
+while 1 do -- attach to some kind of timer as to not block
     server_loop()
 end
