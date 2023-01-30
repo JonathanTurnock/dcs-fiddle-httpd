@@ -338,6 +338,7 @@ local function send_http(client, response)
     local start_line = table.concat({ "HTTP/1.1", response.status, status_text[response.status] }, " ")
 
     local headers = { "Server: Lua HTTP/1.1" }
+
     for name, value in pairs(response.headers) do
         table.insert(headers, name .. ": " .. value)
     end
@@ -362,7 +363,7 @@ local handlers = {}
 local clients = {}
 local tcp_server
 
-local server_config = { address = "localhost", port = 3000 }
+local server_config = { address = "127.0.0.1", port = 3000, cors= false }
 
 local client_id_seq = 1
 
@@ -449,6 +450,11 @@ local create_client_handler = function()
                 handlers[request.path][request.method](request, response)
                 response.status = OK
             end
+        end
+
+        if (server_config.cors) then
+            response.headers["Access-Control-Allow-Origin"] = server_config.cors
+            response.headers["Access-Control-Allow-Headers"] = request.headers["Access-Control-Request-Headers"]
         end
 
         send_http(client, response)
