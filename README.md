@@ -26,6 +26,15 @@ See the `src/init.lua` as an example of usage, note the `json.lua` is optional a
 
 ## API
 
+### create_server
+
+The create Server endpoint is the entrypoint to set up the server, it takes a config and returns a function you must call to accept connections & traffic.
+
+Timeouts are all set to 0, so it does not block so this needs to be called in a loop.
+
+> All the examples are an infinite loop which will block the host environment (i.e. the game) so dont do this, either create another
+> scheduling function of some sort or attach it to the frame loop (if in a game).
+
 ### Basic text
 
 To setup a basic text endpoint define a handler, and start listening.
@@ -37,11 +46,14 @@ http.get("/", function(request, response)
     response.body = "OK"
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
-    port = 80,
-    timeout = 15
+    port = 80
 })
+
+while 1 do
+    receive()
+end
 ```
 
 Sending a simple request will give OK
@@ -67,11 +79,14 @@ http.get("/", function(request, response)
     response.body = json.encode({status="OK"})
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
-    port = 3000,
-    timeout = 15
+    port = 3000
 })
+
+while 1 do
+    receive()
+end
 ```
 
 ```shell
@@ -99,11 +114,14 @@ http.get("/", function(request, response)
     response.body = json.encode({status="OK", queryParams=request.query})
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
-    port = 3000,
-    timeout = 15
+    port = 3000
 })
+
+while 1 do
+    receive()
+end
 ```
 
 ```shell
@@ -131,11 +149,14 @@ http.post("/", function(request, response)
     response.body = json.encode(newEmployee)
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
-    port = 3000,
-    timeout = 15
+    port = 3000
 })
+
+while 1 do
+    receive()
+end
 ```
 
 ```shell
@@ -159,11 +180,14 @@ http.use("GET", "/", function(request, response)
     response.body = "OK"
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
-    port = 3000,
-    timeout = 15
+    port = 3000
 })
+
+while 1 do
+    receive()
+end
 ```
 
 ## Authorisation
@@ -184,16 +208,19 @@ http.get("/", function(request, response)
     response.body = "OK"
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
     port = 3000,
-    timeout = 15,
     auth={
         type="Basic",
         username="admin",
         password="password123!"
     }
 })
+
+while 1 do
+    receive()
+end
 ```
 
 ### Basic
@@ -244,16 +271,19 @@ http.get("/", function(request, response)
     response.body = "OK"
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
     port = 3000,
-    timeout = 15,
     auth={
         type="Api Key",
         key="x-my-app-key",
         value="pviDlowxBn"
     }
 })
+
+while 1 do
+    receive()
+end
 ```
 
 Provide the header in requests to successfully authenticate
@@ -282,15 +312,18 @@ http.get("/", function(request, response)
     response.body = "OK"
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
     port = 3000,
-    timeout = 15,
     auth={
         type="Bearer Token",
         token="pviDlowxBn"
     }
 })
+
+while 1 do
+    receive()
+end
 ```
 
 Here we can see the token is passed in as part of the Authorization header in the format `Bearer {token}`
@@ -318,11 +351,14 @@ http.get("/", function(request, response)
     response.body = "OK"
 end)
 
-http.start({
+local receive = http.create_server({
     address = "localhost",
-    port = 3000,
-    timeout = 15
+    port = 3000
 })
+
+while 1 do
+    receive()
+end
 ```
 
 ## References

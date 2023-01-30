@@ -190,14 +190,13 @@ end
 --- Reads HTTP Message from the given connection
 ---
 --- @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages
---- @param client client @see https://lunarmodules.github.io/luasocket/tcp.html
 --- @param match_headers table headers table that needs to match exactly to proceed to get body
 --- @return table, number Request table containing method, original_url, protocol, path, parameters, body, headers. Optionally returns a second item representing an error_code from the match_headers failing
-local function receive_http(client, match_headers)
+local function receive_http(match_headers)
     local request = { headers = {} }
 
     debug("receiving start-line")
-    local received, err = client:receive()
+    local received, err = coroutine.yield("*l")
 
     if (err) then
         error("Failed to get start-line due to " .. err)
@@ -217,7 +216,7 @@ local function receive_http(client, match_headers)
 
     debug("receiving headers")
     while 1 do
-        local header, err = client:receive()
+        local header, err = coroutine.yield("*l")
         if (err) then
             error("Error while receiving headers " .. err)
             break
@@ -241,7 +240,7 @@ local function receive_http(client, match_headers)
     local content_length = request.headers["Content-Length"]
     if (content_length and tonumber(content_length) > 0) then
         debug("Found content-length header, receiving body")
-        local body, err = client:receive(content_length)
+        local body, err = coroutine.yield(content_length)
 
         request.body = body
 
@@ -360,6 +359,12 @@ end
 ------------------------------------------------------------------------------------------------------------------------
 
 local handlers = {}
+local clients = {}
+local tcp_server
+
+local server_config = { address = "localhost", port = 3000 }
+
+local client_id_seq = 1
 
 local OK = 200
 
@@ -369,6 +374,13 @@ local METHOD_NOT_ALLOWED = 405
 
 local INTERNAL_SERVER_ERROR = 500
 
+-----------------------------------------------------------------------------------------------------------------------
+--- Gets and returns a client id incrementing the sequence
+local function get_client_id()
+    local id = client_id_seq
+    client_id_seq = client_id_seq + 1
+    return id
+end
 ------------------------------------------------------------------------------------------------------------------------
 --- Registers the handler against the method and path
 ---
@@ -401,54 +413,18 @@ local post = function(path, handler)
     use("POST", path, handler)
 end
 
-------------------------------------------------------------------------------------------------------------------------
---- Primary Entrypoint for starting the HTTP server listening.
----
---- @param config table config table defining the HTTP Server configuration
-local start = function(config)
-    -- Overwrite the logger if impl provided
-    if (config.logger) then
-        assert(config.logger.info)
-        assert(config.logger.error)
-
-        info = config.logger.info
-        error = config.logger.error
-    end
-
-    -- Log Handlers at startup
-    for path, methods in pairs(handlers) do
-        for method, handler in pairs(methods) do
-            info(method .. " - " .. path)
-        end
-    end
-
-    -- Validate port config
-    assert(isPort(config.port), "invalid port configuration provided port must be a number between 1023 and 65353")
-
-    local tcpServer = socket.bind(config.address, config.port)
-
-    if not tcpServer then
-        error("Error: Could not bind socket.")
-    end
-
-    local ip, port = tcpServer:getsockname()
-
-    info("HTTP Server running on " .. ip .. ":" .. port)
-
-    while 1 do
-        local client = tcpServer:accept()
-        client:settimeout(config.timeout)
-
+local create_client_handler = function()
+    return coroutine.create(function(id, client)
         -- Dictionary of Headers that need to match, failure to match fails the read operation and returns the error code
         local match_headers = {}
-        if (config.auth) then
-            for header, headerValue in pairs(get_auth_headers(config.auth)) do
+        if (server_config.auth) then
+            for header, headerValue in pairs(get_auth_headers(server_config.auth)) do
                 match_headers[header] = { value = headerValue, error_code = FORBIDDEN }
             end
         end
         local response = { status = INTERNAL_SERVER_ERROR, headers = {} }
 
-        local request, error_status = receive_http(client, match_headers)
+        local request, error_status = receive_http(match_headers)
 
         if (error_status) then
             info("Error code emitted while reading request " .. error_status)
@@ -473,14 +449,99 @@ local start = function(config)
                 handlers[request.path][request.method](request, response)
                 response.status = OK
             end
-
         end
 
         send_http(client, response)
 
         info("Connection Completed")
         client:close()
+    end)
+end
+
+local register_new_clients = function()
+    local client = tcp_server:accept()
+    if (client) then
+        client:settimeout(0)
+        local id = get_client_id()
+        local coro = create_client_handler()
+        clients[id] = { id = id, coro = coro, client = client }
+        local success, res = coroutine.resume(coro, id, client)
+        if (not success) then
+            print("ERROR: Failed to start client handler " .. res)
+        else
+            clients[id].receive_patten = res
+        end
     end
 end
 
-return { start = start, use = use, get = get, post = post }
+local receive_and_resume_clients = function()
+    for id, it in pairs(clients) do
+        if (coroutine.status(it.coro) == "suspended") then
+
+            local line, err = it.client:receive(it.receive_patten)
+            if (err) then
+                info("Unable to resume due to " .. err .. " handling err")
+                if (err == "closed") then
+                    clients[id] = nil
+                end
+            else
+                info("Resuming client handler with line " .. line)
+                local success, res = coroutine.resume(it.coro, line)
+                if (not success) then
+                    error("Failed to resume client handler " .. res)
+                else
+                    it.receive_patten = res
+                end
+            end
+        end
+    end
+end
+
+do_rx_loop = function()
+    register_new_clients()
+    receive_and_resume_clients()
+end
+
+------------------------------------------------------------------------------------------------------------------------
+--- Primary Entrypoint for starting the HTTP server listening.
+---
+--- @param config table config table defining the HTTP Server configuration
+local create_server = function(cfg)
+    -- Overwrite the logger if impl provided
+    if (cfg.logger) then
+        assert(cfg.logger.info)
+        assert(cfg.logger.error)
+
+        info = cfg.logger.info
+        error = cfg.logger.error
+    end
+
+    server_config = cfg
+
+    -- Log Handlers at startup
+    for path, methods in pairs(handlers) do
+        for method, handler in pairs(methods) do
+            info(method .. " - " .. path)
+        end
+    end
+
+    -- Validate port config
+    assert(isPort(server_config.port), "invalid port configuration provided port must be a number between 1023 and 65353")
+
+    tcp_server = socket.bind(server_config.address, server_config.port)
+    tcp_server:settimeout(0)
+
+    if not tcp_server then
+        error("Error: Could not bind socket.")
+    end
+
+    local ip, port = tcp_server:getsockname()
+
+    info("HTTP Server running on " .. ip .. ":" .. port)
+
+    --- Returns function which when called will perform 1 server loop
+    --- Server Loop is 1. registering new clients, 2. looping over clients, receiving network traffic and resuming coroutines with the content.
+    return do_rx_loop
+end
+
+return { create_server = create_server, use = use, get = get, post = post }

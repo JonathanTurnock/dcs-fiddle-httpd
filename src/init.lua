@@ -16,8 +16,11 @@ http.get("/health", function(request, response)
     response.body = json.encode({ status = "UP" })
 end)
 
-http.start({
+local server_loop = http.create_server({
     address = "127.0.0.1",
-    port = 3000,
-    timeout = 15
+    port = 3000
 })
+
+while 1 do
+    server_loop()
+end
