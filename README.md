@@ -361,6 +361,37 @@ while 1 do
 end
 ```
 
+## CORS
+
+In order to send requests from a web site your going to need some CORS headers.
+
+Anything passed into the cors config will be mapped to the `Access-Control-Allow-Origin` response header.
+
+```lua
+local http = require("http")
+
+http.get("/", function(request, response)
+    response.body = "OK"
+end)
+
+local receive = http.create_server({
+    address = "localhost",
+    port = 3000,
+    cors="https://foo.example"
+})
+
+while 1 do
+    receive()
+end
+```
+
+```shell
+➜  ~ curl -f -i --location --request GET 'http://localhost:3000/'
+HTTP/1.1 200 OK
+Server: Lua HTTP/1.1
+Access-Control-Allow-Origin: https://foo.example
+```
+
 ## References
 
 > Documentation about implementing the HTTP Messaging Protocol
