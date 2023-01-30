@@ -22,6 +22,6 @@ local server_loop = http.create_server({
     cors="*"
 })
 
-while 1 do
+while 1 do -- attach to some kind of timer as to not block
     server_loop()
 end
